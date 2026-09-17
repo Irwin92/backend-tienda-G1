@@ -13,6 +13,19 @@ authentication_classes,
 permission_classes )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
+
+#Se crea endPoint reservado para administrador
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAdminUser])
+def panel_admin_api(request):
+    return Response({
+       "mensaje":"Acceso administrativo permitido"
+    })
+
+
+#------------------------------------------------------------------
 
 #Se crea endPoint protegido
 @api_view(['GET'])
@@ -24,22 +37,6 @@ def perfil(request):
         "username": request.user.username,
         "email":request.user.email,
     })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #------------------------------------------------------------------
