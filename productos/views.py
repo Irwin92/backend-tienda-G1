@@ -1,179 +1,169 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse,JsonResponse
+from .models import Producto, Categoria
 
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Producto
-from .serializers import ProductoSerializer
+from .serializers import ProductoSerializer, CategoriaSerializer
 
-from .models import Categoria
-from .serializers import CategoriaSerializer
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import( api_view,
+authentication_classes,
+permission_classes )
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
 
-@api_view(['GET','POST'])
+#Se crea endPoint reservado para administrador
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAdminUser])
+def panel_admin_api(request):
+    return Response({
+       "mensaje":"Acceso administrativo permitido"
+    })
+
+
+#------------------------------------------------------------------
+
+#Se crea endPoint protegido
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def perfil(request):
+    return Response({
+        "id":request.user.id,
+        "username": request.user.username,
+        "email":request.user.email,
+    })
+
+
+#------------------------------------------------------------------
+@api_view(['GET', 'POST'])
 def api_productos(request):
     if request.method == 'GET':
         productos = Producto.objects.all().order_by('id')
-        serializer = ProductoSerializer(productos, many= True)
+        serializer= ProductoSerializer(productos,many=True)
         return Response(serializer.data)
 
     if request.method == 'POST':
-        serializer = ProductoSerializer(data=request.data)
+        serializer=ProductoSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(
                 serializer.data,
-                status = status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED
             )
-
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-#--------------------------------------------------------    
-@api_view(['GET','PUT','PATCH','DELETE'])
-def detalle_producto(request,pk):
+#------------------------------------------------------------------
+@api_view(['GET', 'PUT', 'PATCH','DELETE'])
+def detalle_productos(request,pk):
     try:
         producto = Producto.objects.get(pk=pk)
     except Producto.DoesNotExist:
         return Response(
-            {'error':'Producto no encontrado'},
-            status= status.HTTP_404_NOT_FOUND
+            {'error': 'Producto no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
         )
     if request.method == 'GET':
-        serializer = ProductoSerializer(producto)
+        serializer= ProductoSerializer(producto)
         return Response(serializer.data)
 
-    if request.method in ['GET','PATCH']:
-            serializer = ProductoSerializer(
-                producto,
-                data= request.data,
-                partial=(request.method=='PATCH'))
-            
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
+    if request.method in['PUT','PATCH']:
+        serializer= ProductoSerializer(
+            producto,
+            data=request.data,
+            partial=(request.method=='PATCH')
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
             )
     
     if request.method == 'DELETE':
             producto.delete()
-            return Response( status=status.HTTP_204_NO_CONTENT)
-    
-#++++++++++++++++++++++API CATEGORIAS+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-@api_view(['GET','POST'])
+            return Response(status=status.HTTP_204_NO_CONTENT)   
+     
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++ API Categoria +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+@api_view(['GET', 'POST'])
 def api_categorias(request):
     if request.method == 'GET':
         categorias = Categoria.objects.all().order_by('id')
-        serializer = CategoriaSerializer(categorias, many= True)
+        serializer= CategoriaSerializer(categorias,many=True)
         return Response(serializer.data)
 
     if request.method == 'POST':
-        serializer = CategoriaSerializer(data=request.data)
+        serializer=CategoriaSerializer(data=request.data)
 
         if serializer.is_valid():
             serializer.save()
             return Response(
                 serializer.data,
-                status = status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED
             )
-
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-#--------------------------------------------------------    
-@api_view(['GET','PUT','PATCH','DELETE'])
-def detalle_categoria(request,pk):
+#------------------------------------------------------------------
+@api_view(['GET', 'PUT', 'PATCH','DELETE'])
+def operaciones_categorias(request,pk):
     try:
         categoria = Categoria.objects.get(pk=pk)
     except Producto.DoesNotExist:
         return Response(
-            {'error':'Categoria no encontrada'},
-            status= status.HTTP_404_NOT_FOUND
+            {'error': 'Categoria no encontrado'},
+            status=status.HTTP_404_NOT_FOUND
         )
     if request.method == 'GET':
-        serializer = CategoriaSerializer(categoria)
+        serializer= CategoriaSerializer(categoria)
         return Response(serializer.data)
 
-    if request.method in ['GET','PATCH']:
-            serializer = CategoriaSerializer(
-                categoria,
-                data= request.data,
-                partial=(request.method=='PATCH'))
-            
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
+    if request.method in['PUT','PATCH']:
+        serializer= CategoriaSerializer(
+            categoria,
+            data=request.data,
+            partial=(request.method=='PATCH')
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
             )
     
     if request.method == 'DELETE':
             categoria.delete()
-            return Response( status=status.HTTP_204_NO_CONTENT)
-    
+            return Response(status=status.HTTP_204_NO_CONTENT)    
 
+#------------------------------------------------------------------
+@api_view(['GET'])
+def resumen_categorias(request):
+    total = Categoria.objects.count()
 
+    activas = Categoria.objects.filter(
+        activo = True
+    ).count()
 
+    inactivas = Categoria.objects.filter(
+            activo = False
+        ).count()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#--------------------------------------------------------
-def inicio(request):
-    return HttpResponse('Modulo de productos Activo!')
-#--------------------------------------------------------
-def acerca(request):
-    return  HttpResponse('Api de ejemplo para la semana 3')
-#--------------------------------------------------------
-#def api_productos2(request):
-#    productos = Producto.objects.all()
-
-#    datos = []
-#    for producto in productos:
-#        datos.append({
-#            'id': producto.id,
-#            'nombre':producto.nombre,
-#            'decripcion': producto.descripcion,
-#            'precio': float(producto.precio),
-#            'stock':producto.stock,
-#            'activo': producto.activo
-#        })
-#    return JsonResponse({'productos':datos})
-#--------------------------------------------------------
-#def api_productos(request):
-#    productos = Producto.objects.values(
-#        'id','nombre','precio','stock'
-#    )
-
-#    return JsonResponse({
-#        'productos':list(productos)
-#        })
-#--------------------------------------------------------
-
-    
-
-
+    return Response({
+        "total":total,
+        "activas" : activas,
+        "inactivas" : inactivas
+    })
+#------------------------------------------------------------------
