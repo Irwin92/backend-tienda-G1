@@ -15,6 +15,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 
+#Se crea demostracion con request sesion
+@api_view(['GET'])
+def contador_sesion(request):
+    visitas = request.session.get("visitas", 0)+1
+    request.session["visitas"] =visitas
+    return Response({
+        "Visitas en esta sesion": visitas
+    })
+
+#------------------------------------------------------------------
 #Se crea endPoint reservado para administrador
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
@@ -23,8 +33,6 @@ def panel_admin_api(request):
     return Response({
        "mensaje":"Acceso administrativo permitido"
     })
-
-
 #------------------------------------------------------------------
 
 #Se crea endPoint protegido

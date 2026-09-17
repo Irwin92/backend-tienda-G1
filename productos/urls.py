@@ -19,4 +19,6 @@ urlpatterns= [
      path('api/perfil/',views.perfil, name='api_perfil'),
 
      path('api/admin_info/',views.panel_admin_api, name='api_admin_info'),
+
+     path('api/sesion/',views.contador_sesion, name='contador_sesion'),
 ]
